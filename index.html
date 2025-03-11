@@ -5,10 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Code Scanner</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Fullscreen video container */
+        #scanner-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+        }
+
+        /* Center scanning box */
+        .scanner-frame {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            border: 5px solid transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Green borders */
+        .scanner-frame::before {
+            content: "";
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 5px solid limegreen;
+            border-top-left-radius: 10px;
+            top: -5px;
+            left: -5px;
+        }
+        .scanner-frame::after {
+            content: "";
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 5px solid limegreen;
+            border-top-right-radius: 10px;
+            top: -5px;
+            right: -5px;
+        }
+        .scanner-frame div::before {
+            content: "";
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 5px solid limegreen;
+            border-bottom-left-radius: 10px;
+            bottom: -5px;
+            left: -5px;
+        }
+        .scanner-frame div::after {
+            content: "";
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 5px solid limegreen;
+            border-bottom-right-radius: 10px;
+            bottom: -5px;
+            right: -5px;
+        }
+
+        /* Scanned data display */
+        .scanned-result {
+            position: absolute;
+            bottom: 50px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h2>Scan a QR Code</h2>
-    <div id="scanner-container" style="width: 100%; height: 400px;"></div>
+
+    <!-- Camera Preview -->
+    <video id="scanner-container"></video>
+
+    <!-- Scanning Frame -->
+    <div class="scanner-frame">
+        <div></div>
+    </div>
+
+    <!-- Scanned Data Display -->
+    <div id="scanned-result" class="scanned-result">Waiting for scan...</div>
 
     <form id="qrForm" action="{{ route('qr.scan') }}" method="POST">
         @csrf
@@ -28,11 +133,11 @@
                     type: "LiveStream",
                     target: document.querySelector("#scanner-container"),
                     constraints: {
-                        facingMode: "environment" // Use the back camera
+                        facingMode: "environment" // Use back camera
                     }
                 },
                 decoder: {
-                    readers: ["qr_reader"] // Only scan QR codes
+                    readers: ["code_128_reader", "ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_39_reader", "code_39_vin_reader", "codabar_reader", "i2of5_reader", "2of5_reader", "code_93_reader"]
                 }
             }, function (err) {
                 if (err) {
@@ -47,11 +152,18 @@
                 let scannedCode = data.codeResult.code;
                 console.log("Scanned Code:", scannedCode);
 
+                // Update the UI
+                document.getElementById("scanned-result").textContent = "Scanned: " + scannedCode;
                 document.getElementById("qr_data").value = scannedCode;
-                document.getElementById("qrForm").submit(); // Auto-submit form
-                Quagga.stop(); // Stop scanning after detecting
+
+                // Auto-submit form
+                document.getElementById("qrForm").submit();
+
+                // Stop scanning
+                Quagga.stop();
             });
         });
     </script>
+
 </body>
 </html>
