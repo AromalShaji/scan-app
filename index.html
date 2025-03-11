@@ -145,13 +145,11 @@
                     (decodedText) => {
                         console.log("✅ Scanned Code:", decodedText);
                         document.getElementById("scanned-result").textContent = "Scanned: " + decodedText;
-                        scanner.stop(); // Stop scanning after successful scan
+                        scanner.stop(); 
                     },
                     (errorMessage) => {
-                        console.warn("⚠️ QR Scan error:", errorMessage);
                     }
                 ).catch(err => {
-                    console.error("❌ Scanner error:", err);
                 });
             }
         });
