@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Code Scanner</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -12,28 +12,25 @@
             box-sizing: border-box;
             font-family: Arial, sans-serif;
         }
-        
+
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             background-color: black;
-            overflow: hidden;
+            position: relative;
+            flex-direction: column;
+        }
+
+        /* Scanner container */
+        #scanner-container {
+            width: 100vw;
+            height: 100vh;
             position: relative;
         }
 
-        /* Fullscreen video container */
-        #scanner-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
-        }
-
-        /* Center scanning box */
+        /* Scanning frame */
         .scanner-frame {
             position: absolute;
             width: 250px;
@@ -89,23 +86,23 @@
             right: -5px;
         }
 
-        /* Scanned data display */
+        /* Scanned result */
         .scanned-result {
             position: absolute;
-            bottom: 50px;
+            bottom: 20px;
             width: 100%;
             text-align: center;
             color: white;
             font-size: 18px;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             padding: 10px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Camera Preview -->
-    <video id="scanner-container"></video>
+    <!-- QR Scanner -->
+    <div id="scanner-container"></div>
 
     <!-- Scanning Frame -->
     <div class="scanner-frame">
@@ -115,52 +112,21 @@
     <!-- Scanned Data Display -->
     <div id="scanned-result" class="scanned-result">Waiting for scan...</div>
 
-    <form id="qrForm" action="{{ route('qr.scan') }}" method="POST">
-        @csrf
-        <input type="hidden" name="qr_data" id="qr_data">
-    </form>
-
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            if (!Quagga) {
-                console.error("QuaggaJS failed to load.");
-                return;
-            }
+            const scanner = new Html5QrcodeScanner(
+                "scanner-container", 
+                { fps: 10, qrbox: 250 } 
+            );
 
-            Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: document.querySelector("#scanner-container"),
-                    constraints: {
-                        facingMode: "environment" // Use back camera
-                    }
-                },
-                decoder: {
-                    readers: ["code_128_reader", "ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_39_reader", "code_39_vin_reader", "codabar_reader", "i2of5_reader", "2of5_reader", "code_93_reader"]
-                }
-            }, function (err) {
-                if (err) {
-                    console.error("QuaggaJS initialization failed:", err);
-                    return;
-                }
-                console.log("QuaggaJS initialized successfully.");
-                Quagga.start();
-            });
-
-            Quagga.onDetected(function (data) {
-                let scannedCode = data.codeResult.code;
-                console.log("Scanned Code:", scannedCode);
-
+            scanner.render((decodedText) => {
+                console.log("Scanned Code:", decodedText);
+                
                 // Update the UI
-                document.getElementById("scanned-result").textContent = "Scanned: " + scannedCode;
-                document.getElementById("qr_data").value = scannedCode;
+                document.getElementById("scanned-result").textContent = "Scanned: " + decodedText;
 
-                // Auto-submit form
-                document.getElementById("qrForm").submit();
-
-                // Stop scanning
-                Quagga.stop();
+                // Stop scanning after successful scan
+                scanner.clear();
             });
         });
     </script>
