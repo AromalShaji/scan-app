@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Code Scanner</title>
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+
+    <!-- Corrected QR Code Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
     <style>
         * {
             margin: 0;
@@ -113,7 +116,13 @@
     <div id="scanned-result" class="scanned-result">Waiting for scan...</div>
 
     <script>
+        // Ensure script loads before using Html5QrcodeScanner
         document.addEventListener("DOMContentLoaded", function () {
+            if (typeof Html5QrcodeScanner !== "function") {
+                console.error("Html5QrcodeScanner is not loaded.");
+                return;
+            }
+
             const scanner = new Html5QrcodeScanner(
                 "scanner-container", 
                 { fps: 10, qrbox: 250 } 
